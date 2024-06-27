@@ -36,7 +36,7 @@ async def hello(request: Request, visitor_name: str):
         print(f"An unexpected error occurred: {e}")
 
     # Construct the greeting message
-    greeting = f"Hello, {visitor_name.capitalize()}!"
+    greeting = "Hello, {}!".format(visitor_name.capitalize())
 
     # Return the response directly as a Python dictionary
     return {
