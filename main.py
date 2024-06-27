@@ -6,10 +6,16 @@ app = FastAPI()
 @app.get("/api/hello")
 async def hello(request: Request, visitor_name: str):
 
+    if visitor_name is None:
+        return {"error": "Visitor name is required."}
+
+    # Strip surrounding single or double quotes if present
+    if visitor_name.startswith(("'", '"')) and visitor_name.endswith(("'", '"')):
+        visitor_name = visitor_name[1:-1]
+
     # Get the client IP from X-Forwarded-For header or fallback to request.client.host
     client_ip = request.headers.get('X-Forwarded-For', request.client.host).split(',')[0].strip()
     
-    print(f"Client IP: {client_ip}")  # Log the client IP for debugging
 
     # Default location to "Location unavailable"
     location = "Location unavailable"
@@ -20,8 +26,8 @@ async def hello(request: Request, visitor_name: str):
             response = await client.get(f"http://ip-api.com/json/{client_ip}")
             response.raise_for_status()  # Raises an HTTPStatusError if the status code is 4xx or 5xx
             location_data = response.json()
-            print("Location data:", location_data)  # Log the response data for debugging
-            
+
+
             # Ensure location_data is a dictionary
             if isinstance(location_data, dict):
                 location = location_data.get("city", "Location unavailable")
@@ -35,8 +41,9 @@ async def hello(request: Request, visitor_name: str):
         # Handle any other exceptions
         print(f"An unexpected error occurred: {e}")
 
-    # Construct the greeting message without f-string to handle quotes correctly
+
     greeting = "Hello, {}!".format(visitor_name.capitalize())
+
 
     # Return the response directly as a Python dictionary
     return {
