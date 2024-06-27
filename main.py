@@ -38,7 +38,7 @@ async def hello(request: Request, visitor_name: str):
     # Construct the greeting message
     greeting = f"Hello, {visitor_name.capitalize()}!"
 
-    # Return the response
+    # Return the response directly as a Python dictionary
     return {
         "client_ip": client_ip,
         "location": location,
