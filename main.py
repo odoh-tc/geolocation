@@ -11,7 +11,7 @@ async def hello(request: Request, visitor_name: str):
     
     print(f"Client IP: {client_ip}")  # Log the client IP for debugging
 
-    # Default location to the entire response if city is not available
+    # Default location to "Location unavailable"
     location = "Location unavailable"
     
     try:
@@ -35,7 +35,7 @@ async def hello(request: Request, visitor_name: str):
         # Handle any other exceptions
         print(f"An unexpected error occurred: {e}")
 
-    # Construct the greeting message
+    # Construct the greeting message without f-string to handle quotes correctly
     greeting = "Hello, {}!".format(visitor_name.capitalize())
 
     # Return the response directly as a Python dictionary
