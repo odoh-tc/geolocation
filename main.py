@@ -7,12 +7,9 @@ app = FastAPI()
 async def hello(request: Request, visitor_name: str):
 
     # Get the client IP from X-Forwarded-For header or fallback to request.client.host
-    client_ip = request.headers.get('X-Forwarded-For', request.client.host)
+    client_ip = request.headers.get('X-Forwarded-For', request.client.host).split(',')[0].strip()
     
     print(f"Client IP: {client_ip}")  # Log the client IP for debugging
-
-
-
 
     # Default location to the entire response if city is not available
     location = "Location unavailable"
@@ -47,4 +44,3 @@ async def hello(request: Request, visitor_name: str):
         "location": location,
         "greeting": greeting
     }
-
