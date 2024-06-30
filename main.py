@@ -1,7 +1,13 @@
 from fastapi import FastAPI, Request
 import httpx
+import os
+from dotenv import load_dotenv
+
+load_dotenv()
 
 app = FastAPI()
+
+OPENWEATHERMAP_API_KEY = os.getenv('OPENWEATHERMAP_API_KEY')
 
 @app.get("/api/hello")
 async def hello(request: Request, visitor_name: str):
@@ -9,43 +15,41 @@ async def hello(request: Request, visitor_name: str):
     if visitor_name is None:
         return {"error": "Visitor name is required."}
 
-    # Strip surrounding single or double quotes if present
     if visitor_name.startswith(("'", '"')) and visitor_name.endswith(("'", '"')):
         visitor_name = visitor_name[1:-1]
 
-    # Get the client IP from X-Forwarded-For header or fallback to request.client.host
     client_ip = request.headers.get('X-Forwarded-For', request.client.host).split(',')[0].strip()
     
-
-    # Default location to "Location unavailable"
     location = "Location unavailable"
-    
+    temperature = "Unavailable"
+
     try:
-        # Make an asynchronous request to the IP geolocation API
         async with httpx.AsyncClient() as client:
             response = await client.get(f"http://ip-api.com/json/{client_ip}")
-            response.raise_for_status()  # Raises an HTTPStatusError if the status code is 4xx or 5xx
+            response.raise_for_status() 
             location_data = response.json()
 
-
-            # Ensure location_data is a dictionary
             if isinstance(location_data, dict):
                 location = location_data.get("city", "Location unavailable")
+                if location != "Location unavailable":
+                    weather_response = await client.get(
+                        f"http://api.openweathermap.org/data/2.5/weather?q={location}&units=metric&appid={OPENWEATHERMAP_API_KEY}"
+                    )
+                    weather_response.raise_for_status()
+                    weather_data = weather_response.json()
+
+                    if isinstance(weather_data, dict):
+                        main_data = weather_data.get("main", {})
+                        temperature = main_data.get("temp", "Unavailable")
     except httpx.RequestError as e:
-        # Handle general network errors
-        print(f"Error fetching location data: {e}")
+        print(f"Error fetching data: {e}")
     except httpx.HTTPStatusError as e:
-        # Handle HTTP errors
         print(f"HTTP error occurred: {e.response.status_code} - {e.response.text}")
     except Exception as e:
-        # Handle any other exceptions
         print(f"An unexpected error occurred: {e}")
 
+    greeting = f"Hello, {visitor_name.capitalize()}!, the temperature is {temperature} degrees Celsius in {location}"
 
-    greeting = "Hello, {}!".format(visitor_name.capitalize())
-
-
-    # Return the response directly as a Python dictionary
     return {
         "client_ip": client_ip,
         "location": location,
